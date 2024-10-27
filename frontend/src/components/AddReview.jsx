@@ -161,7 +161,7 @@ function AddReview() {
 
             setSuccess(true);
             setTimeout(() => {
-                navigate(`/restaurant/${selectedRestaurant.id}`);
+                navigate(`/restaurants/${selectedRestaurant.id}`);
             }, 2000);
 
         } catch (err) {
