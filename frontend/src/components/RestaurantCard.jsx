@@ -1,18 +1,20 @@
 import React from 'react';
 import placeholderImg from '../assets/restaurant-placeholder.jpg'
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 const RestaurantCard = ({ restaurant }) => {
+  const navigate = useNavigate();
 
   const handleClick = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/restaurants/${restaurant.id}`);
       console.log('Restaurant details:', response.data);
-      // window.location.href = `/restaurant/${restaurant.id}`;
+      navigate(`/restaurants/${response.data.id}`);
     } catch (error) {
-      // console.error('There was an error fetching the restaurant details:', error);
+      console.error('There was an error fetching the restaurant details:', error);
       // Add this restaurant to the database and then call GET again
       const newRestaurantJson = {
         name: restaurant.displayName.text,
