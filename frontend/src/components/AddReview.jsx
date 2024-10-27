@@ -165,12 +165,13 @@ function AddReview() {
             const newSafeCategories = safetyResponse.data.safe_categories.filter(category => !currentRestrictions.includes(category));
             const updatedRestrictions = [...new Set([...currentRestrictions, ...newSafeCategories])];
 
+            console.log('Updated restrictions:', updatedRestrictions);
              // 7. Update the dish with the new restrictions
-            const updatedDish = await axiosWithAuth.patch(`/dishes/${dishId}/`, {
-                restrictions: updatedRestrictions
-            });
+            // const updatedDish = await axiosWithAuth.patch(`/dishes/${dishId}/`, {
+            //     restrictions: updatedRestrictions
+            // });
 
-            console.log('Updated dish:', updatedDish.data);
+            // console.log('Updated dish:', updatedDish.data);
             
             setSuccess(true);
             setTimeout(() => {
