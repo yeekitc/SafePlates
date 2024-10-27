@@ -1,13 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Paper,
+  CircularProgress,
+  Box
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+}));
 
 const RestaurantPage = () => {
   const { id } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dishes, setDishes] = useState([]);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -24,6 +41,25 @@ const RestaurantPage = () => {
     fetchRestaurant();
   }, [id]);
 
+  useEffect(() => {
+    const fetchDishes = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/dishes/restaurant/${id}`, {
+          params: {
+            restaurant_id: id,
+          }
+        });
+        setDishes(response.data);
+      } catch (error) {
+        console.error('There was an error fetching the dishes:', error);
+      }
+    };
+
+    if (id) {
+      fetchDishes();
+    }
+  }, [id]);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -33,31 +69,122 @@ const RestaurantPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">{restaurant.name || 'No name available'}</h1>
-      <div className="mb-4">
-        <h2 className="text-2xl font-semibold">Details</h2>
-        <p><strong>Address:</strong> {restaurant.google_data?.address || 'No address available'}</p>
-        <p><strong>Rating:</strong> {restaurant.google_data?.rating || 'No rating available'}</p>
-        <p><strong>Price Level:</strong> {restaurant.google_data?.priceLevel || 'No price level available'}</p>
-        <p><strong>Phone:</strong> {restaurant.google_data?.nationalPhoneNumber || 'No phone number available'}</p>
-      </div>
-      <div>
-        <h2 className="text-2xl font-semibold">Menu</h2>
-        {restaurant.menu && restaurant.menu.length > 0 ? (
-          <ul>
-            {restaurant.menu.map((dish, index) => (
-              <li key={index} className="mb-2">
-                <h3 className="text-xl font-semibold">{dish.name || 'No name available'}</h3>
-                <img src={dish.image_url || 'default-image.jpg'} alt={dish.name || 'Dish'} className="w-32 h-32 object-cover" />
-                <p><strong>Allergies:</strong> {dish.allergies ? dish.allergies.join(', ') : 'No allergies information available'}</p>
-                <p><strong>Restrictions:</strong> {dish.restrictions ? dish.restrictions.join(', ') : 'No restrictions information available'}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No dishes available</p>
-        )}
+    <div className="max-w-screen-xl mx-auto p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <h2 className="font-bold text-5xl mb-6">
+            {restaurant.name || 'No name available'}
+          </h2>
+
+          <div className="space-y-8">
+            {dishes.length > 0 ? (
+          dishes.map((dish, index) => (
+            <Card key={index} className="overflow-hidden">
+              <CardContent>
+                <h3 className="font-bold text-2xl mb-2">
+                  {dish.name || 'No dish name available.'}
+                </h3>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  Allergy Information: {dish.allergies ? dish.allergies.map((allergy, i) => (
+                    <Chip
+                      key={i}
+                      label={allergy}
+                      color="warning"
+                      variant="outlined"
+                      className="bg-yellow-50"
+                    />
+                  )) : (
+                    <h1>Unavailable</h1>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  Dietary Restrictions: {dish.restrictions ? dish.restrictions.map((restriction, i) => (
+                    <Chip
+                      key={i}
+                      label={restriction}
+                      color="success"
+                      variant="outlined"
+                      className="bg-green-50"
+                    />
+                  )) : (
+                    <h1>Unavailable</h1>
+                  )}
+                </div>
+
+                <img
+                  src={dish.image_url || 'default-image.jpg'}
+                  alt={dish.name || 'Dish'}
+                  className="w-full h-48 object-cover rounded-md"
+                />
+              </CardContent>
+            </Card>
+          ))
+            ) : (
+              <Card>
+                <CardContent>
+                  <Typography>No dishes available</Typography>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        <div className="md:col-span-1 mt-[76px]">
+          <Paper elevation={3} className="p-4 sticky top-4">
+            <h3 className="font-bold text-2xl mb-4">
+              Restaurant Details
+            </h3>
+
+            <div className="space-y-4">
+              {restaurant.google_data?.address && (
+                <div>
+                  <h4 className="font-semibold">
+                    Address
+                  </h4>
+                  <h4 className="text-gray-600">
+                    {restaurant.google_data.address}
+                  </h4>
+                </div>
+              )}
+
+              {restaurant.google_data?.rating && (
+                <div>
+                  <h4 className="font-semibold">
+                    Rating
+                  </h4>
+                  <h4 className="text-gray-600">
+                    {restaurant.google_data.rating} ⭐
+                  </h4>
+                </div>
+              )}
+
+              {restaurant.google_data?.priceLevel && (
+                <div>
+                  <h4 className="font-semibold">
+
+                    Price Level
+                  </h4>
+                  <h4>
+                    {'$'.repeat(restaurant.google_data.priceLevel)}
+                  </h4>
+                </div>
+              )}
+
+              {restaurant.google_data?.nationalPhoneNumber && (
+                <div>
+                  <h4 className="font-semibold">
+                    Phone
+                  </h4>
+                  <h4>
+                    {restaurant.google_data.nationalPhoneNumber}
+                  </h4>
+                </div>
+              )}
+            </div>
+          </Paper>
+        </div>
       </div>
     </div>
   );

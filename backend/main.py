@@ -508,6 +508,17 @@ async def search_dish_by_name_and_restaurant(name: str, restaurant_id: str):
         logging.error(f"Error searching dish: {e}")
         raise HTTPException(status_code=500, detail="Error searching dish")
     
+# Get all dishes for a restaurant given the restaurant_id
+@app.get("/dishes/restaurant/{restaurant_id}")
+async def get_dishes_by_restaurant(restaurant_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
+    try:
+        cursor = dishes_collection.find({"restaurant_id": ObjectId(restaurant_id)}).limit(10)
+        dishes = await cursor.to_list(length=10)
+        return [dish_serializer(dish) for dish in dishes]
+    except Exception as e:
+        logging.error(f"Error fetching dishes by restaurant ID {restaurant_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid restaurant ID")
+    
     
 @app.get("/dishes/restaurant/{restaurant_id}")
 async def get_dishes_by_restaurant(restaurant_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$"), limit: int = 10):
