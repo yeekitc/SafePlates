@@ -60,6 +60,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 # Serializers
 ####################################################
+
+# def movie_serializer(movie: Dict) -> Dict:
+#     return {
+#         "id": str(movie["_id"]),
+#         "title": movie.get("title"),
+#         "year": movie.get("year"),
+#         "cast": movie.get("cast"),
+#         "plot": movie.get("plot"),
+#     }
+
 def restaurant_serializer(restaurant: Dict) -> Dict:
     google_data = restaurant.get("google_data")
     return {
@@ -75,15 +85,6 @@ def restaurant_serializer(restaurant: Dict) -> Dict:
         } if google_data else None,
         "menu": [str(dish_id) for dish_id in restaurant.get("menu", [])]
     }
-
-# def movie_serializer(movie: Dict) -> Dict:
-#     return {
-#         "id": str(movie["_id"]),
-#         "title": movie.get("title"),
-#         "year": movie.get("year"),
-#         "cast": movie.get("cast"),
-#         "plot": movie.get("plot"),
-#     }
 
 def review_serializer(review: Dict) -> Dict:
     return {
@@ -144,7 +145,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            print("Could not validate credentials")
+            print("Could not validate credentials - email is None")
             raise HTTPException(status_code=401, detail="Could not validate credentials")
         
         user = await users_collection.find_one({"email": email})
@@ -197,6 +198,8 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
     
 # Endpoints for our app, delete the example endpoints above
 
+# Restaurants
+####################################################
 # place_id not the id in mongodb, corresponds to place id got from google maps API
 @app.get("/restaurants/{place_id}")
 async def get_restaurant(place_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
@@ -218,6 +221,7 @@ async def search_restaurants(town: str, name: str, limit: int = 10):
         logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
         raise HTTPException(status_code=500, detail="Error searching restaurants") 
     
+# Make sure to add authentication header when calling this endpoint
 @app.post("/restaurants/")
 async def create_restaurant(restaurant: Dict):
     restaurant_data = {
@@ -227,6 +231,27 @@ async def create_restaurant(restaurant: Dict):
     }
     result = await restaurants_collection.insert_one(restaurant_data)
     return {"message": "Restaurant created successfully", "id": str(result.inserted_id)}
+
+@app.get("/restaurants/")
+async def list_restaurants(limit: int = 10):
+    try:
+        cursor = restaurants_collection.find().limit(limit)
+        restaurants = await cursor.to_list(length=limit)
+        return [restaurant_serializer(restaurant) for restaurant in restaurants]
+    except Exception as e:
+        logging.error(f"Error listing restaurants: {e}")
+        raise HTTPException(status_code=500, detail="Error listing restaurants")
+    
+@app.put("/restaurants/{restaurant_id}")
+async def update_restaurant(restaurant: Dict, restaurant_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
+    try:
+        result = await restaurants_collection.update_one({"_id": ObjectId(restaurant_id)}, {"$set": restaurant})
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Restaurant not found")
+        return {"message": "Restaurant updated successfully"}
+    except Exception as e:
+        logging.error(f"Error updating restaurant by ID {restaurant_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid restaurant ID")
 
 # Reviews
 ####################################################
@@ -252,11 +277,9 @@ async def list_reviews(limit: int = 10):
         raise HTTPException(status_code=500, detail="Error listing reviews")
     
 @app.post("/reviews/")
-# async def create_review(review: Dict, current_user: dict = Depends(get_current_user)):
-async def create_review(review: Dict):
+async def create_review(review: Dict, current_user: dict = Depends(get_current_user)):
     review_data = {
-        # "user_id": ObjectId('671dc3b3a775cf6c2f449088'),
-        "user_id": ObjectId(review["user_id"]),
+        "user_id": ObjectId(current_user["_id"]),
         "dish_id": ObjectId(review["dish_id"]),
         "restaurant_id": ObjectId(review["restaurant_id"]),
         "allergies": review.get("allergies", []),
@@ -266,6 +289,17 @@ async def create_review(review: Dict):
     }
     result = await reviews_collection.insert_one(review_data)
     return {"message": "Review created successfully", "id": str(result.inserted_id)}
+
+@app.put("/reviews/{review_id}")
+async def update_review(review: Dict, review_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
+    try:
+        result = await reviews_collection.update_one({"_id": ObjectId(review_id)}, {"$set": review})
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Review not found")
+        return {"message": "Review updated successfully"}
+    except Exception as e:
+        logging.error(f"Error updating review by ID {review_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid review ID")
 
 # Dishes
 ####################################################
@@ -303,4 +337,15 @@ async def get_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
         return restaurant_serializer(dish)
     except Exception as e:
         logging.error(f"Error fetching dish by ID {dish_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid dish ID")
+    
+@app.put("/dishes/{dish_id}")
+async def update_dish(dish: Dict, dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
+    try:
+        result = await dishes_collection.update_one({"_id": ObjectId(dish_id)}, {"$set": dish})
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Dish not found")
+        return {"message": "Dish updated successfully"}
+    except Exception as e:
+        logging.error(f"Error updating dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
