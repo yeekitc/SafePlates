@@ -169,35 +169,30 @@ def is_dish_safe_from_title(title, tag_list):
         {
             "role": "system",
             "content": (
-                "You are a culinary expert that determines which dietary tags are compatible with a dish. "
-                "Analyze the dish's typical ingredients and RETURN ONLY the compatible tags from the user's list "
-                "as a comma-separated list. A tag is compatible if the dish normally meets that dietary requirement."
+                "You are a dietary assistant that evaluates whether a dish is compatible with specific dietary tags. "
+            "Using the dish title and a list of known dietary restrictions, your task is to determine which tags are safe for the dish."
+            
+            "Steps to follow:"
+            "\n1. Identify the main ingredients implied by the dish title, focusing only on common components (e.g., 'hot dog' contains meat)."
+            "\n2. Compare each dietary tag (that also appears in the original tag_list provided as input) against the implied ingredients. For each tag (that also appears in the original tag_list provided as input), follow these rules:"
+            "\n   - Vegan: The dish is not vegan if it contains meat, dairy, eggs, or fish."
+            "\n   - Vegetarian: The dish is not vegetarian if it contains meat or fish."
+            "\n   - Nut allergy: The dish is not nut-allergy safe if it contains nuts."
+            "\n   - Dairy-free: The dish is not dairy-free if it contains milk or dairy products."
+            "\n   - Gluten-free: The dish is not gluten-free if it contains wheat, barley, or rye."
+            "\n   - Kosher: Assume the dish is not kosher unless specified."
+            "\n   - Halal: Assume the dish is not halal unless specified."
+            
+            "\n3. Remove any incompatible tags based on the known dietary restrictions (e.g., if the dish is 'hot dog,' automatically exclude vegan and vegetarian)."
+            "\n4. Respond ONLY with a comma-separated list of compatible tags."
             )
         },
         {
             "role": "user",
             "content": (
-               f"# Dish title: '{title}'\n"
-                f"# D: {', '.join(tag_list)}\n\n"
-                "# Steps"
-                "Step 1. First, list the typical main ingredients for this dish. Name this list L.\n"
-                "Step 2. Then, check each dietary tag in D's compatibility with the dish:\n"
-                "- vegan: YES if L contains ONLY plant-based products (no meat, dairy, eggs, or fish)\n"
-                "- vegetarian: YES L has no meat/fish\n"
-                "- nut allergy: YES L has no nuts\n"
-                "- gluten-free: YES if L has no wheat/barley/rye\n"
-                "- halal: YES if the preparation of the ingredients in L for this dish typically follows halal requirements\n"
-                "- dairy-free: YES if L has no milk products\n"
-                "- kosher: YES if L and the dish typically follows kosher requirements\n\n"
-                "Step 3. Verify that this list of compatible dietary tags is correct by re-referencing the main ingredients of this dish. Remember, we are only checking the dietary tags in D.\n"
-                "Step 4. Ensure that the resulting list only has dietary tags that are also in D."
-                "Step 5. Ensure that no tags in the resulting list repeat."
-                "Step 6. IMPORTANT: Return ONLY the compatible tags as a simple comma-separated list.\n\n"
-                "# For example:\n"
-                "Input: 'Tofu Stir Fry' with tags [vegan, nut allergy, gluten-free]\n"
-                "Step 1: Ingredients = tofu, vegetables, soy sauce, oil\n"
-                "Step 2: vegan=yes (all plant-based), nut allergy=yes (no nuts), gluten-free=yes (if using tamari)\n"
-                "Step 3: Output: vegan, nut allergy, gluten-free"
+                f"Dish title: '{title}'\n"
+                f"Known restrictions/allergens in the dish: {', '.join(tag_list)}\n\n"
+                "Please respond ONLY with a comma-separated list of compatible dietary tags."
             )
         }
     ]
