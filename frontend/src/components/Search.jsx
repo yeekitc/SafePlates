@@ -40,12 +40,12 @@ const Search = () => {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto p-4">
-      <h1 className="text-5xl text-center font-bold mb-4">SafePlate</h1>
+    <div className="max-w-screen-xl mx-auto mt-52 p-4">
+      <h1 className="text-5xl text-center font-bold mb-4">SafePlates</h1>
       <h2 className="text-3xl text-center font-bold mb-4">Safe and yummy options for everyone.</h2>
-      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-center justify-center p-4 rounded-md">
-        <div className="flex flex-col items-center sm:items-start">
-          <label className="block text-gray-700">Town</label>
+      <form onSubmit={handleSearch} className="flex justify-center items-end gap-4 mb-8">
+        <div className="flex flex-col">
+          <label className="mb-2 text-gray-700">Town</label>
           <input
             type="text"
             value={town}
@@ -54,8 +54,9 @@ const Search = () => {
             placeholder="Pittsburgh, PA"
           />
         </div>
-        <div className="flex flex-col items-center sm:items-start">
-          <label className="block text-gray-700">Restaurant</label>
+
+        <div className="flex flex-col">
+          <label className="mb-2 text-gray-700">Restaurant</label>
           <input
             type="text"
             value={restaurant}
@@ -66,7 +67,7 @@ const Search = () => {
         </div>
         <button
           type="submit"
-          className="px-4 py-2 bg-yorange text-white rounded"
+          className="px-6 py-2 bg-yorange text-white rounded h-[42px]"
         >
           Search
         </button>
