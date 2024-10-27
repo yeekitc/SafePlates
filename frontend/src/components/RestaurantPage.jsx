@@ -24,6 +24,7 @@ const RestaurantPage = () => {
   const { id } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dishes, setDishes] = useState([]);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -38,6 +39,25 @@ const RestaurantPage = () => {
     };
 
     fetchRestaurant();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchDishes = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/dishes/restaurant/${id}`, {
+          params: {
+            restaurant_id: id,
+          }
+        });
+        setDishes(response.data);
+      } catch (error) {
+        console.error('There was an error fetching the dishes:', error);
+      }
+    };
+
+    if (id) {
+      fetchDishes();
+    }
   }, [id]);
 
   if (loading) {
@@ -57,51 +77,50 @@ const RestaurantPage = () => {
           </h2>
 
           <div className="space-y-8">
-            {restaurant.menu && restaurant.menu.length > 0 ? (
-              restaurant.menu.map((dish, index) => (
-                <Card key={index} className="overflow-hidden">
-                  <CardContent>
-                    <h3 className="font-bold text-2xl mb-2">
-                      {dish.name || 'No dish name available.'}
-                    </h3>
+            {dishes.length > 0 ? (
+          dishes.map((dish, index) => (
+            <Card key={index} className="overflow-hidden">
+              <CardContent>
+                <h3 className="font-bold text-2xl mb-2">
+                  {dish.name || 'No dish name available.'}
+                </h3>
 
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      Allergy Information: {dish.allergies ? dish.allergies.map((allergy, i) => (
-                        <Chip
-                          key={i}
-                          label={allergy}
-                          color="warning"
-                          variant="outlined"
-                          className="bg-yellow-50"
-                        />
-                      )) : (
-                        <h1>Unavailable</h1>
-                      )}
-
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      Dietary Restrictions:{dish.restrictions ? dish.restrictions.map((restriction, i) => (
-                        <Chip
-                          key={i}
-                          label={restriction}
-                          color="success"
-                          variant="outlined"
-                          className="bg-green-50"
-                        />
-                      )) : (
-                        <h1>Unavailable</h1>
-                      )}
-                    </div>
-
-                    <img
-                      src={dish.image_url || 'default-image.jpg'}
-                      alt={dish.name || 'Dish'}
-                      className="w-full h-48 object-cover rounded-md"
+                <div className="flex flex-wrap gap-2 mb-4">
+                  Allergy Information: {dish.allergies ? dish.allergies.map((allergy, i) => (
+                    <Chip
+                      key={i}
+                      label={allergy}
+                      color="warning"
+                      variant="outlined"
+                      className="bg-yellow-50"
                     />
-                  </CardContent>
-                </Card>
-              ))
+                  )) : (
+                    <h1>Unavailable</h1>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  Dietary Restrictions: {dish.restrictions ? dish.restrictions.map((restriction, i) => (
+                    <Chip
+                      key={i}
+                      label={restriction}
+                      color="success"
+                      variant="outlined"
+                      className="bg-green-50"
+                    />
+                  )) : (
+                    <h1>Unavailable</h1>
+                  )}
+                </div>
+
+                <img
+                  src={dish.image_url || 'default-image.jpg'}
+                  alt={dish.name || 'Dish'}
+                  className="w-full h-48 object-cover rounded-md"
+                />
+              </CardContent>
+            </Card>
+          ))
             ) : (
               <Card>
                 <CardContent>
