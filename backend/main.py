@@ -15,7 +15,7 @@ from openai import OpenAI
 
 # Google Maps API imports
 from google_maps_api import search_restaurants_api
-from safety import is_dish_safe
+from safety import is_dish_safe, is_dish_safe_from_title
 
 load_dotenv()
 
@@ -155,14 +155,66 @@ async def search_restaurants(town: str, name: str, limit: int = 10):
         logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
         raise HTTPException(status_code=500, detail="Error searching restaurants") 
 
+# @app.post("/check_safety/")
+# async def check_safe(comments: List[str] = Body(...), criteria: str = Body(...)):
+#     try:
+#         result = is_dish_safe(comments, criteria)
+#         if result:
+#             return {"result": result}
+#         else:
+#             raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{criteria}'-friendly")
+#     except Exception as e:
+#         logging.error(f"Error determining if dish is '{criteria}'-friendly: {e}")
+#         raise HTTPException(status_code=500, detail="Error processing '{criteria}' check")
+
 @app.post("/check_safety/")
-async def check_safe(comments: List[str] = Body(...), criteria: str = Body(...)):
+async def check_safe(comment: str = Body(...), tag_list: List[str] = Body(...)):
     try:
-        result = is_dish_safe(comments, criteria)
-        if result:
-            return {"result": result}
+        # result = is_dish_safe(comment, tag_list)
+        safe_categories = is_dish_safe(comment, tag_list)
+        if safe_categories is not None:  # Check if we got a valid response
+            return {"safe_categories": safe_categories}
         else:
-            raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{criteria}'-friendly")
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to determine safe dietary categories"
+            )
+        # if result:
+        #     return {"result": result}
+        # else:
+        #     raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{tag_list}'-friendly")
+    # except Exception as e:
+    #     logging.error(f"Error determining if dish is '{tag_list}'-friendly: {e}")
+    #     raise HTTPException(status_code=500, detail="Error processing '{tag_list}' check")
     except Exception as e:
-        logging.error(f"Error determining if dish is '{criteria}'-friendly: {e}")
-        raise HTTPException(status_code=500, detail="Error processing '{criteria}' check")
+        logging.error(f"Error determining safe dietary categories: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error processing dietary safety check"
+        )
+    
+@app.post("/check_safety_from_title/")
+async def check_safe_from_title(title: str = Body(..., embed=True), tag_list: List[str] = Body(..., embed = True)):
+
+    try:
+        safe_categories = is_dish_safe_from_title(title, tag_list)
+        if safe_categories is not None:  # Check if we got a valid response
+            return {"safe_categories": safe_categories}
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to determine safe dietary categories"
+            )
+        # if result:
+        #     return {"result": result}
+        # else:
+        #     raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{tag_list}'-friendly")
+    # except Exception as e:
+    #     logging.error(f"Error determining if dish is '{tag_list}'-friendly: {e}")
+    #     raise HTTPException(status_code=500, detail="Error processing '{tag_list}' check")
+    except Exception as e:
+        logging.error(f"Error determining safe dietary categories: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error processing dietary safety check"
+        )
