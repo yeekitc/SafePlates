@@ -9,7 +9,7 @@ export default {
     colors: {
       ...colors,
       'beige': '#F5F5EE',
-      'yorange': '#F46527',
+      'yorange': '#F3B829',
     },
     extend: {},
   },
