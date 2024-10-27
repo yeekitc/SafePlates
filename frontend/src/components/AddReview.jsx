@@ -47,9 +47,8 @@ function AddReview() {
             }
 
             try {
-                const response = await axiosWithAuth.get('/restaurants/search/', {
+                const response = await axiosWithAuth.get('/restaurants/search-db/', {
                     params: {
-                        town: 'Pittsburgh', // You might want to make this dynamic or get from user's location
                         name: searchTerm,
                         limit: 5
                     }
@@ -98,16 +97,17 @@ function AddReview() {
             let restaurantId = null;
             
             // 1. Check if restaurant exists and get/create it
-            const restaurantResponse = await axiosWithAuth.get(`/restaurants/${selectedRestaurant.id}`);
+            const restaurantResponse = await axiosWithAuth.get(`/restaurants/id/${selectedRestaurant.id}`);
             if (restaurantResponse.data) {
                 restaurantId = restaurantResponse.data.id;
-            } else {
-                // Create restaurant if it doesn't exist
-                const newRestaurantResponse = await axiosWithAuth.post('/restaurants/', {
-                    google_data: selectedRestaurant
-                });
-                restaurantId = newRestaurantResponse.data.id;
-            }
+            } 
+            // else {
+            //     // Create restaurant if it doesn't exist
+            //     const newRestaurantResponse = await axiosWithAuth.post('/restaurants/', {
+            //         google_data: selectedRestaurant
+            //     });
+            //     restaurantId = newRestaurantResponse.data.id;
+            // }
 
             // 2. Check if dish exists
             const dishResponse = await axiosWithAuth.get(`/dishes/search/`, {
@@ -116,6 +116,9 @@ function AddReview() {
                     restaurant_id: restaurantId
                 }
             });
+
+            console.log("dish", dishResponse);
+            console.log("restaurant", restaurantResponse);
 
             let dishId;
             
@@ -186,7 +189,7 @@ function AddReview() {
                         <Autocomplete
                             fullWidth
                             options={restaurants}
-                            getOptionLabel={(option) => option.displayName?.text || ''}
+                            getOptionLabel={(option) => option.name || ''}                            
                             onChange={(_, newValue) => setSelectedRestaurant(newValue)}
                             onInputChange={(_, newInputValue) => setSearchTerm(newInputValue)}
                             renderInput={(params) => (
@@ -201,10 +204,10 @@ function AddReview() {
                                 <Box component="li" {...props}>
                                     <Box>
                                         <Typography variant="body1">
-                                            {option.displayName?.text}
+                                            {option.name}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {option.formattedAddress}
+                                            {option.google_data?.address}
                                         </Typography>
                                     </Box>
                                 </Box>
