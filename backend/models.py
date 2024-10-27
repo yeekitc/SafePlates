@@ -10,8 +10,8 @@ class NewUser(BaseModel):
     email: EmailStr
     password: str
     
-class Movie(BaseModel):
-    title: str
-    year: Optional[int]
-    cast: Optional[List[str]]
-    plot: Optional[str]
+# class Movie(BaseModel):
+#     title: str
+#     year: Optional[int]
+#     cast: Optional[List[str]]
+#     plot: Optional[str]
