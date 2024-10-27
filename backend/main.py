@@ -1,5 +1,6 @@
 import logging
-from fastapi import FastAPI, HTTPException, Path, Depends
+import boto3
+from fastapi import FastAPI, File, HTTPException, Path, Depends, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
@@ -40,6 +41,15 @@ restaurants_collection = db["restaurants"]
 reviews_collection = db["reviews"]
 dishes_collection = db["dishes"]
 users_collection = db["users"]
+
+# AWS S3
+AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION', 'us-east-2')
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -271,14 +281,29 @@ async def search_restaurants(town: str, name: str, limit: int = 10):
     
 # Make sure to add authentication header when calling this endpoint
 @app.post("/restaurants/")
-async def create_restaurant(restaurant: Dict):
-    restaurant_data = {
-        "name": restaurant.get("name"),
-        "google_data": restaurant.get("google_data"),
-        "menu": restaurant.get("menu", [])
-    }
-    result = await restaurants_collection.insert_one(restaurant_data)
-    return {"message": "Restaurant created successfully", "id": str(result.inserted_id)}
+async def create_restaurant(restaurant: Dict, current_user: dict = Depends(get_current_user)):
+    """
+    Create a new restaurant from Google Places data
+    """
+    try:
+        google_data = restaurant.get("google_data", {})
+        restaurant_data = {
+            "name": google_data.get("displayName", {}).get("text"),
+            "google_data": {
+                "id": google_data.get("id"),
+                "address": google_data.get("formattedAddress"),
+                "rating": google_data.get("rating"),
+                "priceLevel": google_data.get("priceLevel"),
+                "nationalPhoneNumber": google_data.get("nationalPhoneNumber")
+            },
+            "menu": []
+        }
+        
+        result = await restaurants_collection.insert_one(restaurant_data)
+        return {"message": "Restaurant created successfully", "id": str(result.inserted_id)}
+    except Exception as e:
+        logging.error(f"Error creating restaurant: {e}")
+        raise HTTPException(status_code=500, detail="Could not create restaurant")
 
 @app.get("/restaurants/")
 async def list_restaurants(limit: int = 10):
@@ -348,6 +373,38 @@ async def update_review(review: Dict, review_id: str = Path(..., regex=r"^[0-9a-
     except Exception as e:
         logging.error(f"Error updating review by ID {review_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid review ID")
+    
+from fastapi import File, UploadFile, Form
+
+@app.post("/upload")
+async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """
+    Upload an image to S3 and return the URL
+    """
+    try:
+        # Read file content
+        file_content = await file.read()
+        
+        # Generate unique filename with original extension
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        original_extension = os.path.splitext(file.filename)[1]
+        filename = f"dish-uploads/{timestamp}{original_extension}"
+
+        # Upload to S3
+        s3_client.put_object(
+            Bucket=AWS_BUCKET_NAME,
+            Key=filename,
+            Body=file_content,
+            ContentType=file.content_type
+        )
+
+        # Generate public URL
+        image_url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        
+        return {"url": image_url}
+    except Exception as e:
+        logging.error(f"Error uploading file to S3: {e}")
+        raise HTTPException(status_code=500, detail="Could not upload file")
 
 # Dishes
 ####################################################
@@ -397,3 +454,20 @@ async def update_dish(dish: Dict, dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{
     except Exception as e:
         logging.error(f"Error updating dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
+    
+@app.get("/dishes/search/")
+async def search_dish_by_name_and_restaurant(name: str, restaurant_id: str):
+    """
+    Search for a dish by name within a specific restaurant
+    """
+    try:
+        dish = await dishes_collection.find_one({
+            "name": {"$regex": f"^{name}$", "$options": "i"},
+            "restaurant_id": ObjectId(restaurant_id)
+        })
+        return dish_serializer(dish) if dish else None
+    except Exception as e:
+        logging.error(f"Error searching dish: {e}")
+        raise HTTPException(status_code=500, detail="Error searching dish")
+    
+    
