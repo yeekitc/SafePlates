@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Main shield -->
+  <path 
+    d="M100 30 L160 60 L160 110 C160 150 130 170 100 180 C70 170 40 150 40 110 L40 60 Z"
+    fill="#F3B829"
+  />
+  <!-- Inner circle -->
+  <circle cx="100" cy="100" r="45" fill="white"/>
+  <!-- Heart-shaped leaves -->
+  <path 
+    d="M100 85 Q85 70 70 85 Q55 100 100 125 Q145 100 130 85 Q115 70 100 85"
+    fill="#F3B829"
+  />
+  <!-- Stem -->
+  <path 
+    d="M100 125 L100 140"
+    stroke="#F3B829"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+</svg>
