@@ -202,7 +202,7 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
 ####################################################
 # place_id not the id in mongodb, corresponds to place id got from google maps API
 @app.get("/restaurants/{place_id}")
-async def get_restaurant(place_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
+async def get_restaurant(place_id: str = Path(..., regex=r"^[a-zA-Z0-9_-]+$")):
     try:
         restaurant = await restaurants_collection.find_one({"google_data.place_id": place_id})
         if not restaurant:
