@@ -176,8 +176,8 @@ function AddReview() {
         <Container maxWidth="md">
             <Box sx={{ py: 4 }}>
                 {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <Typography variant="h3" component="h1" sx={{ mr: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h5" component="h4" sx={{ mr: 2 }}>
                         Add Review
                     </Typography>
                 </Box>
