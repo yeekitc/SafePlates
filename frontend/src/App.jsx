@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import axios from 'axios';
+import LoginPage from './components/LoginPage';
+import RegisterPage from './components/RegisterPage';
+import AddReview from './components/AddReview';
 import NavBar from './components/NavBar';
 import Search from './components/Search';
 
@@ -28,15 +32,17 @@ const App = () => {
   };
 
   return (
-    <main className="bg-beige min-h-screen">
-      <NavBar />
-      {/* {user ? (
-        <h1>{`Welcome back, ${user.message.split(',')[1].split('!')[0].trim()}!`}</h1>
-      ) : (
-        <h1>Welcome, Guest!</h1>
-      )} */}
-      <Search />
-    </main>
+    <Router>
+      <main className="bg-beige min-h-screen">
+        <NavBar />
+        <Routes>
+          <Route path="/" element={<Search />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/add-review" element={<AddReview />} />
+        </Routes>
+      </main>
+    </Router>
   );
 };
 
