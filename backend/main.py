@@ -457,10 +457,10 @@ async def create_dish(dish: Dict):
 @app.get("/dishes/{dish_id}")
 async def get_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
     try:
-        dish = await restaurants_collection.find_one({"_id": ObjectId(dish_id)})
+        dish = await dishes_collection.find_one({"_id": ObjectId(dish_id)})
         if not dish:
             raise HTTPException(status_code=404, detail="Dish not found")
-        return restaurant_serializer(dish)
+        return dish_serializer(dish)
     except Exception as e:
         logging.error(f"Error fetching dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
