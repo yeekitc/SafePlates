@@ -10,7 +10,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import RestaurantPage from './components/RestaurantPage';
 import DishPage from './components/DishPage';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "http://13.58.201.35:8000";
 
 const App = () => {
   const [user, setUser] = useState(null);

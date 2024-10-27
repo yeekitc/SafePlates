@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import RestaurantCard from './RestaurantCard';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "http://13.58.201.35:8000";
 
 const Search = ({ user }) => {
   const [town, setTown] = useState('');
