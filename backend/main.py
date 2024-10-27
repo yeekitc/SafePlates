@@ -11,6 +11,8 @@ import os
 from datetime import datetime, timedelta, timezone
 import bcrypt
 from jwt import PyJWTError, decode, encode
+import boto3
+from datetime import datetime
 
 # Google Maps API imports
 from google_maps_api import search_restaurants_api
@@ -42,7 +44,7 @@ s3_client = boto3.client(
     's3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-    region_name=os.getenv('AWS_REGION', 'us-east-1')
+    region_name=os.getenv('AWS_REGION', 'us-east-2')
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -78,7 +80,7 @@ async def test_upload():
         
         # Generate unique filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"test-uploads/{timestamp}_test-image.jpg"
+        filename = f"test-uploads/{timestamp}_test-image.png"
 
         # Upload to S3
         s3_client.upload_file(
@@ -95,8 +97,11 @@ async def test_upload():
         
         return {"message": "Test image uploaded successfully", "image_url": image_url}
 
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+        raise HTTPException(status_code=404, detail="Test image file not found")
     except Exception as e:
-        print(f"Error uploading image: {e}")  # For debugging
+        print(f"Error uploading image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/movies/{movie_id}")
