@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import NavBar from './components/NavBar';
+import Search from './components/Search';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -34,6 +35,7 @@ const App = () => {
       ) : (
         <h1>Welcome, Guest!</h1>
       )}
+      <Search />
     </main>
   );
 };
