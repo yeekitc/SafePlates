@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from "react-router-dom";
-import logo from '../assets/allerfree.svg';
+import logo from '../assets/safeplates.svg';
 
 export default function NavBar() {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -19,8 +19,8 @@ export default function NavBar() {
         <nav>
             <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse">
-                    <img src={logo} className="h-8" alt="Allerfree logo" />
-                    <span className="self-center text-2xl font-semibold whitespace-nowrap">AllerFree</span>
+                    <img src={logo} className="h-8" alt="SafePlates logo" />
+                    <span className="self-center text-2xl font-semibold whitespace-nowrap">SafePlates</span>
                 </Link>
                 <button
                     data-collapse-toggle="navbar-default"
