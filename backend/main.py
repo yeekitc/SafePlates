@@ -355,6 +355,16 @@ async def update_review(review: Dict, review_id: str = Path(..., regex=r"^[0-9a-
     except Exception as e:
         logging.error(f"Error updating review by ID {review_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid review ID")
+    
+@app.get("/reviews/dish/{dish_id}")
+async def get_reviews_by_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$"), limit: int = 10):
+    try:
+        cursor = reviews_collection.find({"dish_id": ObjectId(dish_id)}).limit(limit)
+        reviews = await cursor.to_list(length=limit)
+        return [review_serializer(review) for review in reviews]
+    except Exception as e:
+        logging.error(f"Error fetching reviews for dish ID {dish_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching reviews")
 
 # Dishes
 ####################################################

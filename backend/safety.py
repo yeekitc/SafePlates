@@ -146,74 +146,74 @@ def is_dish_safe(comment, tag_list):
 #         print(f"Exception details: {e}")
 #         return []
 
-def is_dish_safe_from_title(title, tag_list):
-    """
-     Determines which dietary tags from the user's list are compatible with the dish
-    based on common ingredients found online.
+# def is_dish_safe_from_title(title, tag_list):
+#     """
+#      Determines which dietary tags from the user's list are compatible with the dish
+#     based on common ingredients found online.
 
-    Args:
-        title (str): The title of the dish.
-        tag_list (list of str): The list of dietary tags to evaluate for compatibility.
+#     Args:
+#         title (str): The title of the dish.
+#         tag_list (list of str): The list of dietary tags to evaluate for compatibility.
 
-    Returns:
-        list of str: A subset of tag_list containing compatible dietary tags.
+#     Returns:
+#         list of str: A subset of tag_list containing compatible dietary tags.
 
 
-    """
+#     """
 
-    # Full list of dietary categories for reference
-    all_categories = ["vegan", "vegetarian", "kosher", "nut allergy", "halal", "dairy-free", "gluten-free"]
+#     # Full list of dietary categories for reference
+#     all_categories = ["vegan", "vegetarian", "kosher", "nut allergy", "halal", "dairy-free", "gluten-free"]
 
-    # Prepare the messages for the chat completion
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a dietary assistant that evaluates whether a dish is compatible with specific dietary tags. "
-            "Using the dish title and a list of known dietary restrictions, your task is to determine which tags are safe for the dish."
+#     # Prepare the messages for the chat completion
+#     messages = [
+#         {
+#             "role": "system",
+#             "content": (
+#                 "You are a dietary assistant that evaluates whether a dish is compatible with specific dietary tags. "
+#             "Using the dish title and a list of known dietary restrictions, your task is to determine which tags are safe for the dish."
             
-            "Steps to follow:"
-            "\n1. Identify the main ingredients implied by the dish title, focusing only on common components (e.g., 'hot dog' contains meat)."
-            "\n2. Compare each dietary tag (that also appears in the original tag_list provided as input) against the implied ingredients. For each tag (that also appears in the original tag_list provided as input), follow these rules:"
-            "\n   - Vegan: The dish is not vegan if it contains meat, dairy, eggs, or fish."
-            "\n   - Vegetarian: The dish is not vegetarian if it contains meat or fish."
-            "\n   - Nut allergy: The dish is not nut-allergy safe if it contains nuts."
-            "\n   - Dairy-free: The dish is not dairy-free if it contains milk or dairy products."
-            "\n   - Gluten-free: The dish is not gluten-free if it contains wheat, barley, or rye."
-            "\n   - Kosher: Assume the dish is not kosher unless specified."
-            "\n   - Halal: Assume the dish is not halal unless specified."
+#             "Steps to follow:"
+#             "\n1. Identify the main ingredients implied by the dish title, focusing only on common components (e.g., 'hot dog' contains meat)."
+#             "\n2. Compare each dietary tag (that also appears in the original tag_list provided as input) against the implied ingredients. For each tag (that also appears in the original tag_list provided as input), follow these rules:"
+#             "\n   - Vegan: The dish is not vegan if it contains meat, dairy, eggs, or fish."
+#             "\n   - Vegetarian: The dish is not vegetarian if it contains meat or fish."
+#             "\n   - Nut allergy: The dish is not nut-allergy safe if it contains nuts."
+#             "\n   - Dairy-free: The dish is not dairy-free if it contains milk or dairy products."
+#             "\n   - Gluten-free: The dish is not gluten-free if it contains wheat, barley, or rye."
+#             "\n   - Kosher: Assume the dish is not kosher unless specified."
+#             "\n   - Halal: Assume the dish is not halal unless specified."
             
-            "\n3. Remove any incompatible tags based on the known dietary restrictions (e.g., if the dish is 'hot dog,' automatically exclude vegan and vegetarian)."
-            "\n4. Respond ONLY with a comma-separated list of compatible tags."
-            )
-        },
-        {
-            "role": "user",
-            "content": (
-                f"Dish title: '{title}'\n"
-                f"Known restrictions/allergens in the dish: {', '.join(tag_list)}\n\n"
-                "Please respond ONLY with a comma-separated list of compatible dietary tags."
-            )
-        }
-    ]
+#             "\n3. Remove any incompatible tags based on the known dietary restrictions (e.g., if the dish is 'hot dog,' automatically exclude vegan and vegetarian)."
+#             "\n4. Respond ONLY with a comma-separated list of compatible tags."
+#             )
+#         },
+#         {
+#             "role": "user",
+#             "content": (
+#                 f"Dish title: '{title}'\n"
+#                 f"Known restrictions/allergens in the dish: {', '.join(tag_list)}\n\n"
+#                 "Please respond ONLY with a comma-separated list of compatible dietary tags."
+#             )
+#         }
+#     ]
 
-    try:
-        # Call the OpenAI Chat Completion API
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use 'gpt-4' if available
-            messages=messages,
-        )
+#     try:
+#         # Call the OpenAI Chat Completion API
+#         response = client.chat.completions.create(
+#             model="gpt-4o-mini",  # Use 'gpt-4' if available
+#             messages=messages,
+#         )
 
-        # Extract the assistant's reply
-        ai_response = response.choices[0].message.content.strip()
-        safe_categories = [cat.strip().lower() for cat in ai_response.split(',')]
+#         # Extract the assistant's reply
+#         ai_response = response.choices[0].message.content.strip()
+#         safe_categories = [cat.strip().lower() for cat in ai_response.split(',')]
         
-        # Filter to ensure only valid categories from `all_categories` are returned
-        valid_categories = [cat for cat in safe_categories if cat in all_categories]
-        return valid_categories
+#         # Filter to ensure only valid categories from `all_categories` are returned
+#         valid_categories = [cat for cat in safe_categories if cat in all_categories]
+#         return valid_categories
 
-    except Exception as e:
-        # Enhanced error handling
-        print("An error occurred while calling the OpenAI API.")
-        print(f"Exception details: {e}")
-        return []
+#     except Exception as e:
+#         # Enhanced error handling
+#         print("An error occurred while calling the OpenAI API.")
+#         print(f"Exception details: {e}")
+#         return []
