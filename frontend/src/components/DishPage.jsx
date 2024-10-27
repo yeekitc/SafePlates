@@ -84,8 +84,8 @@ const DishPage = () => {
         <div>
           <h2 className="text-2xl font-semibold">{dish.name}</h2>
           {dish.image_url && <img src={dish.image_url} alt={dish.name} className="w-32 h-32 object-cover" />}
-          <p><strong>Allergies:</strong> {dish.allergies ? dish.allergies.join(', ') : 'No allergies information available'}</p>
-          <p><strong>Restrictions:</strong> {dish.restrictions ? dish.restrictions.join(', ') : 'No restrictions information available'}</p>
+          <p><strong>Safe for those with Allergies:</strong> {dish.allergies ? dish.allergies.join(', ') : 'No allergies information available'}</p>
+          <p><strong>Safe for those with Restrictions:</strong> {dish.restrictions ? dish.restrictions.join(', ') : 'No restrictions information available'}</p>
         </div>
       ) : (
         <p>Dish not found.</p>

@@ -486,12 +486,28 @@ async def get_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
 async def update_dish(dish: Dict, dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
     try:
         result = await dishes_collection.update_one({"_id": ObjectId(dish_id)}, {"$set": dish})
+        print("dishres", result)
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Dish not found")
         return {"message": "Dish updated successfully"}
     except Exception as e:
         logging.error(f"Error updating dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
+    
+# @app.patch("/dishes/restrictions/{dish_id}")
+# async def update_dish_restrictions(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$"), restrictions: list = Body(...)):
+#     try:
+#         result = await dishes_collection.update_one(
+#             {"_id": ObjectId(dish_id)},
+#             {"$set": {"restrictions": restrictions}}
+#         )
+#         if result.modified_count == 0:
+#             raise HTTPException(status_code=404, detail="Dish not found")
+#         updated_dish = await dishes_collection.find_one({"_id": ObjectId(dish_id)})
+#         return dish_serializer(updated_dish)
+#     except Exception as e:
+#         logging.error(f"Error updating dish by ID {dish_id}: {e}")
+#         raise HTTPException(status_code=400, detail="Invalid dish ID or update data")
     
 @app.get("/dishes/search/")
 async def search_dish_by_name_and_restaurant(name: str, restaurant_id: str):

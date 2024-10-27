@@ -163,11 +163,20 @@ function AddReview() {
             // });
             const currentRestrictions = formData.restrictions.split(',').map(r => r.trim());
             const newSafeCategories = safetyResponse.data.safe_categories.filter(category => !currentRestrictions.includes(category));
-            const updatedRestrictions = [...new Set([...currentRestrictions, ...newSafeCategories])];
+            const updatedRestrictions = Array.from(new Set([...currentRestrictions, ...newSafeCategories]));
 
             console.log('Updated restrictions:', updatedRestrictions);
              // 7. Update the dish with the new restrictions
-            // const updatedDish = await axiosWithAuth.patch(`/dishes/${dishId}/`, {
+            //  Create a new dish with the updated restrictions
+            // var updatedDish = dishResponse.data;
+            // updatedDish.restrictions = updatedRestrictions;
+            // updatedDish = await axiosWithAuth.patch(`/dishes/${dishId}/`, {
+            //     dish: updatedDish,
+            //     dish_id: dishId
+            // });
+            // 7. Update the dish with the new restrictions
+            // const updatedDish = await axiosWithAuth.patch(`/dishes/restrictions/${dishId}/`, {
+            //     dish_id: dishId,
             //     restrictions: updatedRestrictions
             // });
 

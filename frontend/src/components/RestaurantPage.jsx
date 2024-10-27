@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 
 const RestaurantPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dishes, setDishes] = useState([]);
@@ -118,6 +119,14 @@ const RestaurantPage = () => {
                   alt={dish.name || 'Dish'}
                   className="w-full h-48 object-cover rounded-md"
                 />
+                <button
+                    type="submit"
+                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-yorange hover:bg-yorange focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yorange"
+                    onClick={() => navigate(`/dish/${dish.id}`)}
+                    >
+                    View Dish
+                </button>
+                    
               </CardContent>
             </Card>
           ))
