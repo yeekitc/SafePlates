@@ -1,5 +1,7 @@
 import React from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -7,6 +9,7 @@ export default function LoginPage() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -14,12 +17,12 @@ export default function LoginPage() {
             const response = await axios.post(`${API_BASE_URL}/login`, { email, password });
             localStorage.setItem('token', response.data.access_token);
             setIsLoggedIn(true); // Update the state to reflect the login status
-            console.log('Login successful');
+            navigate('/');
+            toast.success('Login successful');
         } catch (error) {
             console.error('Login error:', error);
-            alert('Invalid credentials');
+            toast.error('Invalid credentials');
         }
-        console.log('Login attempted with:', { email, password });
     };
 
     return (

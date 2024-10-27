@@ -1,5 +1,7 @@
 import React from 'react'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -8,6 +10,7 @@ export default function RegisterPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLogin, setIsLogin] = React.useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,10 +21,11 @@ export default function RegisterPage() {
       setName('');
       setEmail('');
       setPassword('');
-      alert('Registration successful! Please log in.');
+      toast.success('Registration successful!');
+      navigate('/');
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed');
+      toast.error('Registration failed');
     }
   };
 
