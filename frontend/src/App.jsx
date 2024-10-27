@@ -7,6 +7,7 @@ import AddReview from './components/AddReview';
 import NavBar from './components/NavBar';
 import Search from './components/Search';
 import toast, { Toaster } from 'react-hot-toast';
+import RestaurantPage from './components/RestaurantPage';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -46,6 +47,7 @@ const App = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/add-review" element={<AddReview />} />
+            <Route path="/restaurants/:id" element={<RestaurantPage />} />
           </Routes>
         </main>
       </Router>
