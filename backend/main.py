@@ -144,9 +144,57 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
 
 @app.get("/restaurants/search/")
 async def search_restaurants(town: str, name: str, limit: int = 10):
-    try:
-        results = await search_restaurants_api(town, name)
-        return results
-    except Exception as e:
-        logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
-        raise HTTPException(status_code=500, detail="Error searching restaurants") 
+    results = [
+        {
+            'id': 'ChIJT6iVv1bxNIgRkn1QO2lEhiI',
+            'nationalPhoneNumber': '(412) 224-5586',
+            'formattedAddress': '211 Forbes Ave, Pittsburgh, PA 15222, USA',
+            'rating': 3.4,
+            'priceLevel': 'PRICE_LEVEL_INEXPENSIVE',
+            'displayName': {'text': 'Chipotle Mexican Grill', 'languageCode': 'en'},
+            'servesVegetarianFood': True
+        },
+        {
+            'id': 'ChIJhQOupibyNIgReBoACHik1Jw',
+            'nationalPhoneNumber': '(412) 904-3716',
+            'formattedAddress': '4611 Forbes Ave, Pittsburgh, PA 15213, USA',
+            'rating': 3.2,
+            'priceLevel': 'PRICE_LEVEL_INEXPENSIVE',
+            'displayName': {'text': 'Chipotle Mexican Grill', 'languageCode': 'en'},
+            'servesVegetarianFood': True
+        },
+        {
+            'id': 'ChIJVyjr-TvyNIgR_bA14kixa-0',
+            'nationalPhoneNumber': '(412) 621-1993',
+            'formattedAddress': '4800 Baum Blvd, Pittsburgh, PA 15213, USA',
+            'rating': 3.9,
+            'priceLevel': 'PRICE_LEVEL_INEXPENSIVE',
+            'displayName': {'text': 'Chipotle Mexican Grill', 'languageCode': 'en'},
+            'servesVegetarianFood': True
+        },
+        {
+            'id': 'ChIJj5EwlUTzNIgRQJDZdRGUcb4',
+            'nationalPhoneNumber': '(412) 746-0602',
+            'formattedAddress': '1685 Smallman St, Pittsburgh, PA 15222, USA',
+            'rating': 2.2,
+            'priceLevel': 'PRICE_LEVEL_INEXPENSIVE',
+            'displayName': {'text': 'Chipotle Mexican Grill', 'languageCode': 'en'},
+            'servesVegetarianFood': True
+        },
+        {
+            'id': 'ChIJ0VPq8RvtNIgRj5Ga8BZOeHA',
+            'nationalPhoneNumber': '(412) 406-8538',
+            'formattedAddress': '1027 Freeport Rd, Pittsburgh, PA 15238, USA',
+            'rating': 3.2,
+            'priceLevel': 'PRICE_LEVEL_INEXPENSIVE',
+            'displayName': {'text': 'Chipotle Mexican Grill', 'languageCode': 'en'},
+            'servesVegetarianFood': True
+        }
+    ]
+    return results[:limit]
+    # try:
+    #     results = await search_restaurants_api(town, name)
+    #     return results
+    # except Exception as e:
+    #     logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
+    #     raise HTTPException(status_code=500, detail="Error searching restaurants") 
