@@ -1,9 +1,9 @@
 import logging
-from fastapi import FastAPI, HTTPException, Path, Depends
+from fastapi import FastAPI, HTTPException, Path, Depends, Body
 from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from models import NewUser, User
@@ -11,9 +11,11 @@ import os
 from datetime import datetime, timedelta, timezone
 import bcrypt
 from jwt import PyJWTError, decode, encode
+from openai import OpenAI
 
 # Google Maps API imports
 from google_maps_api import search_restaurants_api
+from vegan import is_dish_vegan
 
 load_dotenv()
 
@@ -27,11 +29,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize MongoDB and OpenAI client
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
     raise ValueError("MONGO_URI is not set in the environment variables")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["sample_mflix"]
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY is not set in the environment variables")
+openai_client = OpenAI(api_key=openai_api_key)
 
 movies_collection = db["movies"]
 users_collection = db["users"]
@@ -60,7 +68,6 @@ def movie_serializer(movie: Dict) -> Dict:
         "cast": movie.get("cast"),
         "plot": movie.get("plot"),
     }
-
 
 @app.get("/movies/{movie_id}")
 async def get_movie(movie_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
@@ -92,8 +99,6 @@ async def list_movies(limit: int = 10):
     except Exception as e:
         logging.error(f"Error listing movies: {e}")
         raise HTTPException(status_code=500, detail="Error listing movies")
-
-
 
 @app.post("/sign_up")
 async def sign_up(new_user: NewUser):
@@ -136,7 +141,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         return user
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
-    
 
 @app.get("/protected-route/")
 async def protected_route(current_user: dict = Depends(get_current_user)):
@@ -150,3 +154,15 @@ async def search_restaurants(town: str, name: str, limit: int = 10):
     except Exception as e:
         logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
         raise HTTPException(status_code=500, detail="Error searching restaurants") 
+
+@app.post("/check_vegan/")
+async def check_vegan(comments: List[str] = Body(...)):
+    try:
+        result = is_dish_vegan(comments)
+        if result:
+            return {"result": result}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to determine if the dish is vegan-friendly")
+    except Exception as e:
+        logging.error(f"Error determining if dish is vegan-friendly: {e}")
+        raise HTTPException(status_code=500, detail="Error processing vegan check")
