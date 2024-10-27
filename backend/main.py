@@ -222,6 +222,29 @@ async def get_restaurant(place_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
         logging.error(f"Error fetching restaurant by place_id {place_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid restaurant place_id")
 
+@app.get("/restaurants/id/{restaurant_id}")
+async def get_restaurant_by_id(restaurant_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
+    try:
+        restaurant = await restaurants_collection.find_one({"_id": ObjectId(restaurant_id)})
+        if not restaurant:
+            raise HTTPException(status_code=404, detail="Restaurant not found")
+        return restaurant_serializer(restaurant)
+    except Exception as e:
+        logging.error(f"Error fetching restaurant by ID {restaurant_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid restaurant ID")
+
+@app.get("/restaurants/search-db/")
+async def search_restaurants_db(name: str, limit: int = 10):
+    try:
+        cursor = restaurants_collection.find({"name": {"$regex": name, "$options": "i"}}).limit(limit)
+        restaurants = await cursor.to_list(length=limit)
+        print("restaurants", restaurants)
+        print([restaurant_serializer(restaurant) for restaurant in restaurants])
+        return [restaurant_serializer(restaurant) for restaurant in restaurants]
+    except Exception as e:
+        logging.error(f"Error searching restaurants with name '{name}': {e}")
+        raise HTTPException(status_code=500, detail="Error searching restaurants")
+    
 @app.get("/restaurants/search/")
 async def search_restaurants(town: str, name: str, limit: int = 10):
     results = [
@@ -374,37 +397,35 @@ async def update_review(review: Dict, review_id: str = Path(..., regex=r"^[0-9a-
         logging.error(f"Error updating review by ID {review_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid review ID")
     
-from fastapi import File, UploadFile, Form
-
-@app.post("/upload")
-async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
-    """
-    Upload an image to S3 and return the URL
-    """
-    try:
-        # Read file content
-        file_content = await file.read()
+# @app.post("/upload")
+# async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+#     """
+#     Upload an image to S3 and return the URL
+#     """
+#     try:
+#         # Read file content
+#         file_content = await file.read()
         
-        # Generate unique filename with original extension
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        original_extension = os.path.splitext(file.filename)[1]
-        filename = f"dish-uploads/{timestamp}{original_extension}"
+#         # Generate unique filename with original extension
+#         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+#         original_extension = os.path.splitext(file.filename)[1]
+#         filename = f"dish-uploads/{timestamp}{original_extension}"
 
-        # Upload to S3
-        s3_client.put_object(
-            Bucket=AWS_BUCKET_NAME,
-            Key=filename,
-            Body=file_content,
-            ContentType=file.content_type
-        )
+#         # Upload to S3
+#         s3_client.put_object(
+#             Bucket=AWS_BUCKET_NAME,
+#             Key=filename,
+#             Body=file_content,
+#             ContentType=file.content_type
+#         )
 
-        # Generate public URL
-        image_url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
+#         # Generate public URL
+#         image_url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
         
-        return {"url": image_url}
-    except Exception as e:
-        logging.error(f"Error uploading file to S3: {e}")
-        raise HTTPException(status_code=500, detail="Could not upload file")
+#         return {"url": image_url}
+#     except Exception as e:
+#         logging.error(f"Error uploading file to S3: {e}")
+#         raise HTTPException(status_code=500, detail="Could not upload file")
 
 # Dishes
 ####################################################
