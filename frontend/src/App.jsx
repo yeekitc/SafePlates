@@ -6,6 +6,7 @@ import RegisterPage from './components/RegisterPage';
 import AddReview from './components/AddReview';
 import NavBar from './components/NavBar';
 import Search from './components/Search';
+import DishPage from './components/DishPage';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -40,6 +41,9 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/add-review" element={<AddReview />} />
+          {/* <Route path="/dish/671dc17553113cb4b2734125" element={<DishPage />} /> */}
+          <Route path="/dish/:id" element={<DishPage />} />
+
         </Routes>
       </main>
     </Router>
