@@ -15,7 +15,7 @@ from openai import OpenAI
 
 # Google Maps API imports
 from google_maps_api import search_restaurants_api
-from vegan import is_dish_vegan
+from safety import is_dish_safe
 
 load_dotenv()
 
@@ -155,14 +155,14 @@ async def search_restaurants(town: str, name: str, limit: int = 10):
         logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
         raise HTTPException(status_code=500, detail="Error searching restaurants") 
 
-@app.post("/check_vegan/")
-async def check_vegan(comments: List[str] = Body(...)):
+@app.post("/check_safety/")
+async def check_safe(comments: List[str] = Body(...), criteria: str = Body(...)):
     try:
-        result = is_dish_vegan(comments)
+        result = is_dish_safe(comments, criteria)
         if result:
             return {"result": result}
         else:
-            raise HTTPException(status_code=500, detail="Failed to determine if the dish is vegan-friendly")
+            raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{criteria}'-friendly")
     except Exception as e:
-        logging.error(f"Error determining if dish is vegan-friendly: {e}")
-        raise HTTPException(status_code=500, detail="Error processing vegan check")
+        logging.error(f"Error determining if dish is '{criteria}'-friendly: {e}")
+        raise HTTPException(status_code=500, detail="Error processing '{criteria}' check")
