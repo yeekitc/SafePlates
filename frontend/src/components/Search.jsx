@@ -4,7 +4,7 @@ import RestaurantCard from './RestaurantCard';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-const Search = () => {
+const Search = ({ user }) => {
   const [town, setTown] = useState('');
   const [restaurant, setRestaurant] = useState('');
   const [restaurants, setRestaurants] = useState([]);
@@ -41,7 +41,7 @@ const Search = () => {
 
   return (
     <div className="max-w-screen-xl mx-auto mt-52 p-4">
-      <h1 className="text-5xl text-center font-bold mb-4">SafePlates</h1>
+      <h1 className="text-5xl text-center font-bold mb-4">{user ? `Welcome back, ${user.message.split(',')[1].split('!')[0].trim()}!` : 'SafePlates'}</h1>
       <h2 className="text-3xl text-center font-bold mb-4">Safe and yummy options for everyone.</h2>
       <form onSubmit={handleSearch} className="flex justify-center items-end gap-4 mb-8">
         <div className="flex flex-col">

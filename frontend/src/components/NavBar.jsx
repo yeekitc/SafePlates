@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import logo from '../assets/safeplates.svg';
+import toast from 'react-hot-toast';
 
 export default function NavBar() {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -13,12 +14,13 @@ export default function NavBar() {
     const handleLogout = () => {
         localStorage.removeItem('token');
         setIsLoggedIn(false);
+        toast.success("Successfully logged out");
     };
 
     return (
         <nav>
             <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse">
+                <Link to="/" className="flex items-center space-x-1 rtl:space-x-reverse">
                     <img src={logo} className="h-8" alt="SafePlates logo" />
                     <span className="self-center text-2xl font-semibold whitespace-nowrap">SafePlates</span>
                 </Link>
