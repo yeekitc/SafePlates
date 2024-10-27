@@ -7,3 +7,4 @@ pyjwt
 pydantic[email]
 httpx
 python-multipart
+boto3
