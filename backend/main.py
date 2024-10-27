@@ -61,17 +61,18 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 # Serializers
 ####################################################
 def restaurant_serializer(restaurant: Dict) -> Dict:
+    google_data = restaurant.get("google_data")
     return {
         "id": str(restaurant["_id"]),
         "name": restaurant.get("name"),
         "google_data": {
-            "place_id": restaurant["google_data"].get("place_id"),
-            "rating": restaurant["google_data"].get("rating"),
-            "priceLevel": restaurant["google_data"].get("priceLevel"),
-            "reviews": restaurant["google_data"].get("reviews"),
-            "address": restaurant["google_data"].get("address"),
-            "nationalPhoneNumber": restaurant["google_data"].get("nationalPhoneNumber")
-        },
+            "place_id": google_data.get("place_id"),
+            "rating": google_data.get("rating"),
+            "priceLevel": google_data.get("priceLevel"),
+            "reviews": google_data.get("reviews"),
+            "address": google_data.get("address"),
+            "nationalPhoneNumber": google_data.get("nationalPhoneNumber")
+        } if google_data else None,
         "menu": [str(dish_id) for dish_id in restaurant.get("menu", [])]
     }
 
@@ -143,14 +144,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
+            print("Could not validate credentials")
             raise HTTPException(status_code=401, detail="Could not validate credentials")
         
         user = await users_collection.find_one({"email": email})
         if user is None:
+            print("User not found")
             raise HTTPException(status_code=401, detail="User not found")
         
         return user
     except PyJWTError:
+        print("Could not validate credentials")
         raise HTTPException(status_code=401, detail="Could not validate credentials")
     
 
@@ -197,13 +201,13 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
 @app.get("/restaurants/{place_id}")
 async def get_restaurant(place_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
     try:
-        restaurant = await restaurants_collection.find_one({"place_id": ObjectId(place_id)})
+        restaurant = await restaurants_collection.find_one({"google_data.place_id": place_id})
         if not restaurant:
             raise HTTPException(status_code=404, detail="Restaurant not found")
         return restaurant_serializer(restaurant)
     except Exception as e:
-        logging.error(f"Error fetching restaurant by ID {place_id}: {e}")
-        raise HTTPException(status_code=400, detail="Invalid restaurant ID")
+        logging.error(f"Error fetching restaurant by place_id {place_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid restaurant place_id")
 
 @app.get("/restaurants/search/")
 async def search_restaurants(town: str, name: str, limit: int = 10):
@@ -248,9 +252,11 @@ async def list_reviews(limit: int = 10):
         raise HTTPException(status_code=500, detail="Error listing reviews")
     
 @app.post("/reviews/")
-async def create_review(review: Dict, current_user: dict = Depends(get_current_user)):
+# async def create_review(review: Dict, current_user: dict = Depends(get_current_user)):
+async def create_review(review: Dict):
     review_data = {
-        "user_id": ObjectId(current_user["_id"]),
+        # "user_id": ObjectId('671dc3b3a775cf6c2f449088'),
+        "user_id": ObjectId(review["user_id"]),
         "dish_id": ObjectId(review["dish_id"]),
         "restaurant_id": ObjectId(review["restaurant_id"]),
         "allergies": review.get("allergies", []),
