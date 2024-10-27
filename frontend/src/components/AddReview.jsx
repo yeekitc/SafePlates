@@ -101,13 +101,6 @@ function AddReview() {
             if (restaurantResponse.data) {
                 restaurantId = restaurantResponse.data.id;
             } 
-            // else {
-            //     // Create restaurant if it doesn't exist
-            //     const newRestaurantResponse = await axiosWithAuth.post('/restaurants/', {
-            //         google_data: selectedRestaurant
-            //     });
-            //     restaurantId = newRestaurantResponse.data.id;
-            // }
 
             // 2. Check if dish exists
             const dishResponse = await axiosWithAuth.get(`/dishes/search/`, {
@@ -116,9 +109,6 @@ function AddReview() {
                     restaurant_id: restaurantId
                 }
             });
-
-            console.log("dish", dishResponse);
-            console.log("restaurant", restaurantResponse);
 
             let dishId;
             
@@ -152,13 +142,36 @@ function AddReview() {
             }
 
             // 4. Create the review
-            await axiosWithAuth.post('/reviews/', {
+            const reviewResponse = await axiosWithAuth.post('/reviews/', {
                 dish_id: dishId,
                 restaurant_id: restaurantId,
                 restrictions: formData.restrictions.split(',').map(r => r.trim()),
                 comment: formData.comment
             });
 
+            // 5. Call check_safety endpoint
+            const safetyResponse = await axiosWithAuth.post('/check_safety/', {
+                comment: formData.comment,
+                tag_list: formData.restrictions.split(',').map(r => r.trim())
+            });
+
+            console.log('Safety response:', safetyResponse.data);
+
+            // 6. With the safety response, edit the dish to include the new safe allergens and dietary restrictions
+            // const updatedDish = await axiosWithAuth.patch(`/dishes/${dishId}/`, {
+            //     restrictions: safetyResponse.data.safe_categories
+            // });
+            const currentRestrictions = formData.restrictions.split(',').map(r => r.trim());
+            const newSafeCategories = safetyResponse.data.safe_categories.filter(category => !currentRestrictions.includes(category));
+            const updatedRestrictions = [...new Set([...currentRestrictions, ...newSafeCategories])];
+
+             // 7. Update the dish with the new restrictions
+            const updatedDish = await axiosWithAuth.patch(`/dishes/${dishId}/`, {
+                restrictions: updatedRestrictions
+            });
+
+            console.log('Updated dish:', updatedDish.data);
+            
             setSuccess(true);
             setTimeout(() => {
                 navigate(`/restaurants/${selectedRestaurant.id}`);
