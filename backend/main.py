@@ -36,6 +36,15 @@ db = client["sample_mflix"]
 movies_collection = db["movies"]
 users_collection = db["users"]
 
+# AWS S3
+AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION', 'us-east-1')
+)
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
@@ -61,6 +70,34 @@ def movie_serializer(movie: Dict) -> Dict:
         "plot": movie.get("plot"),
     }
 
+@app.post("/test-upload")
+async def test_upload():
+    try:
+        # Path to your test image in assets
+        image_path = "test.png"  # adjust path as needed
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"test-uploads/{timestamp}_test-image.jpg"
+
+        # Upload to S3
+        s3_client.upload_file(
+            image_path,
+            AWS_BUCKET_NAME,
+            filename,
+            ExtraArgs={
+                "ContentType": "image/"
+            }
+        )
+
+        # Generate public URL
+        image_url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        
+        return {"message": "Test image uploaded successfully", "image_url": image_url}
+
+    except Exception as e:
+        print(f"Error uploading image: {e}")  # For debugging
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/movies/{movie_id}")
 async def get_movie(movie_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):

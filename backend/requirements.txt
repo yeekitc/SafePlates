@@ -6,3 +6,6 @@ bcrypt
 pyjwt
 pydantic[email]
 httpx
+boto3 
+python-multipart
+datetime
