@@ -8,3 +8,4 @@ pydantic[email]
 httpx
 python-multipart
 boto3
+openai

@@ -1,10 +1,10 @@
 import logging
 import boto3
-from fastapi import FastAPI, File, HTTPException, Path, Depends, UploadFile
+from fastapi import FastAPI, File, HTTPException, Path, Depends, UploadFile, Body
 from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from models import NewUser, User
@@ -12,9 +12,11 @@ import os
 from datetime import datetime, timedelta, timezone
 import bcrypt
 from jwt import PyJWTError, decode, encode
+from openai import OpenAI
 
 # Google Maps API imports
 from google_maps_api import search_restaurants_api
+from safety import is_dish_safe
 
 load_dotenv()
 
@@ -28,11 +30,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize MongoDB and OpenAI client
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
     raise ValueError("MONGO_URI is not set in the environment variables")
 client = AsyncIOMotorClient(MONGO_URI)
 # db = client["sample_mflix"]
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY is not set in the environment variables")
+openai_client = OpenAI(api_key=openai_api_key)
 db = client["restaurant_allergy"]
 
 # movies_collection = db["movies"]
@@ -167,7 +175,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except PyJWTError:
         print("Could not validate credentials")
         raise HTTPException(status_code=401, detail="Could not validate credentials")
-    
 
 @app.get("/protected-route/")
 async def protected_route(current_user: dict = Depends(get_current_user)):
@@ -427,6 +434,16 @@ async def update_review(review: Dict, review_id: str = Path(..., regex=r"^[0-9a-
 #         logging.error(f"Error uploading file to S3: {e}")
 #         raise HTTPException(status_code=500, detail="Could not upload file")
 
+@app.get("/reviews/dish/{dish_id}")
+async def get_reviews_by_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$"), limit: int = 10):
+    try:
+        cursor = reviews_collection.find({"dish_id": ObjectId(dish_id)}).limit(limit)
+        reviews = await cursor.to_list(length=limit)
+        return [review_serializer(review) for review in reviews]
+    except Exception as e:
+        logging.error(f"Error fetching reviews for dish ID {dish_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching reviews")
+
 # Dishes
 ####################################################
 @app.get("/dishes/")
@@ -457,10 +474,10 @@ async def create_dish(dish: Dict):
 @app.get("/dishes/{dish_id}")
 async def get_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
     try:
-        dish = await restaurants_collection.find_one({"_id": ObjectId(dish_id)})
+        dish = await dishes_collection.find_one({"_id": ObjectId(dish_id)})
         if not dish:
             raise HTTPException(status_code=404, detail="Dish not found")
-        return restaurant_serializer(dish)
+        return dish_serializer(dish)
     except Exception as e:
         logging.error(f"Error fetching dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
@@ -492,3 +509,100 @@ async def search_dish_by_name_and_restaurant(name: str, restaurant_id: str):
         raise HTTPException(status_code=500, detail="Error searching dish")
     
     
+@app.get("/dishes/restaurant/{restaurant_id}")
+async def get_dishes_by_restaurant(restaurant_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$"), limit: int = 10):
+    try:
+        cursor = dishes_collection.find({"restaurant_id": ObjectId(restaurant_id)}).limit(limit)
+        dishes = await cursor.to_list(length=limit)
+        return [dish_serializer(dish) for dish in dishes]
+    except Exception as e:
+        logging.error(f"Error fetching dishes for restaurant ID {restaurant_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching dishes")
+
+# @app.post("/check_safety/")
+# async def check_safe(comments: List[str] = Body(...), criteria: str = Body(...)):
+#     try:
+#         result = is_dish_safe(comments, criteria)
+#         if result:
+#             return {"result": result}
+#         else:
+#             raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{criteria}'-friendly")
+#     except Exception as e:
+#         logging.error(f"Error determining if dish is '{criteria}'-friendly: {e}")
+#         raise HTTPException(status_code=500, detail="Error processing '{criteria}' check")
+
+# @app.post("/check_safety/")
+# async def check_safe(comment: str = Body(...), tag_list: List[str] = Body(...)):
+#     try:
+#         # result = is_dish_safe(comment, tag_list)
+#         safe_categories = is_dish_safe(comment, tag_list)
+#         if safe_categories is not None:  # Check if we got a valid response
+#             return {"safe_categories": safe_categories}
+#         else:
+#             raise HTTPException(
+#                 status_code=500, 
+#                 detail="Failed to determine safe dietary categories"
+#             )
+#         # if result:
+#         #     return {"result": result}
+#         # else:
+#         #     raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{tag_list}'-friendly")
+#     # except Exception as e:
+#     #     logging.error(f"Error determining if dish is '{tag_list}'-friendly: {e}")
+#     #     raise HTTPException(status_code=500, detail="Error processing '{tag_list}' check")
+#     except Exception as e:
+#         logging.error(f"Error searching restaurants with name '{name}' in town '{town}': {e}")
+#         raise HTTPException(status_code=500, detail="Error searching restaurants") 
+
+
+@app.post("/check_safety/")
+async def check_safe(comment: str = Body(...), tag_list: List[str] = Body(...)):
+    try:
+        # result = is_dish_safe(comment, tag_list)
+        safe_categories = is_dish_safe(comment, tag_list)
+        if safe_categories is not None:  # Check if we got a valid response
+            return {"safe_categories": safe_categories}
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to determine safe dietary categories"
+            )
+        # if result:
+        #     return {"result": result}
+        # else:
+        #     raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{tag_list}'-friendly")
+    # except Exception as e:
+    #     logging.error(f"Error determining if dish is '{tag_list}'-friendly: {e}")
+    #     raise HTTPException(status_code=500, detail="Error processing '{tag_list}' check")
+    except Exception as e:
+        logging.error(f"Error determining safe dietary categories: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error processing dietary safety check"
+        )
+    
+# @app.post("/check_safety_from_title/")
+# async def check_safe_from_title(title: str = Body(..., embed=True), tag_list: List[str] = Body(..., embed = True)):
+
+#     try:
+#         safe_categories = is_dish_safe_from_title(title, tag_list)
+#         if safe_categories is not None:  # Check if we got a valid response
+#             return {"safe_categories": safe_categories}
+#         else:
+#             raise HTTPException(
+#                 status_code=500, 
+#                 detail="Failed to determine safe dietary categories"
+#             )
+#         # if result:
+#         #     return {"result": result}
+#         # else:
+#         #     raise HTTPException(status_code=500, detail=f"Failed to determine if the dish is '{tag_list}'-friendly")
+#     # except Exception as e:
+#     #     logging.error(f"Error determining if dish is '{tag_list}'-friendly: {e}")
+#     #     raise HTTPException(status_code=500, detail="Error processing '{tag_list}' check")
+#     except Exception as e:
+#         logging.error(f"Error determining safe dietary categories: {e}")
+#         raise HTTPException(
+#             status_code=500, 
+#             detail="Error processing dietary safety check"
+#         )
