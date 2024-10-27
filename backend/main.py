@@ -15,7 +15,7 @@ from openai import OpenAI
 
 # Google Maps API imports
 from google_maps_api import search_restaurants_api
-from safety import is_dish_safe, is_dish_safe_from_title
+from safety import is_dish_safe
 
 load_dotenv()
 
@@ -396,10 +396,10 @@ async def create_dish(dish: Dict):
 @app.get("/dishes/{dish_id}")
 async def get_dish(dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$")):
     try:
-        dish = await restaurants_collection.find_one({"_id": ObjectId(dish_id)})
+        dish = await dishes_collection.find_one({"_id": ObjectId(dish_id)})
         if not dish:
             raise HTTPException(status_code=404, detail="Dish not found")
-        return restaurant_serializer(dish)
+        return dish_serializer(dish)
     except Exception as e:
         logging.error(f"Error fetching dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
@@ -414,6 +414,16 @@ async def update_dish(dish: Dict, dish_id: str = Path(..., regex=r"^[0-9a-fA-F]{
     except Exception as e:
         logging.error(f"Error updating dish by ID {dish_id}: {e}")
         raise HTTPException(status_code=400, detail="Invalid dish ID")
+    
+@app.get("/dishes/restaurant/{restaurant_id}")
+async def get_dishes_by_restaurant(restaurant_id: str = Path(..., regex=r"^[0-9a-fA-F]{24}$"), limit: int = 10):
+    try:
+        cursor = dishes_collection.find({"restaurant_id": ObjectId(restaurant_id)}).limit(limit)
+        dishes = await cursor.to_list(length=limit)
+        return [dish_serializer(dish) for dish in dishes]
+    except Exception as e:
+        logging.error(f"Error fetching dishes for restaurant ID {restaurant_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching dishes")
 
 # @app.post("/check_safety/")
 # async def check_safe(comments: List[str] = Body(...), criteria: str = Body(...)):
