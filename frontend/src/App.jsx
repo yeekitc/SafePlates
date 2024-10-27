@@ -28,13 +28,13 @@ const App = () => {
   };
 
   return (
-    <main>
+    <main className="bg-beige min-h-screen">
       <NavBar />
-      {user ? (
+      {/* {user ? (
         <h1>{`Welcome back, ${user.message.split(',')[1].split('!')[0].trim()}!`}</h1>
       ) : (
         <h1>Welcome, Guest!</h1>
-      )}
+      )} */}
       <Search />
     </main>
   );
